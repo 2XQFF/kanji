@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>틱택토 (3말 제한, 삼세판)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Gmarket Sans', sans-serif;
+      background: linear-gradient(to bottom right, #e0f7fa, #f1f8e9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 10px auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    td {
+      width: 70px; 
+      height: 70px;
+      border: 2px solid #000;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s;
+    }
+    td:hover {
+      background-color: #f0f0f0;
+    }
+    .mark {
+      font-size: 28px;
+      line-height: 1;
+    }
+    .coord {
+      font-size: 10px;
+      color: #555;
+      line-height: 1;
+    }
+    .X { color: #e53935; }
+    .O { color: #1e88e5; }
+    .win { background-color: #fff176 !important; }
+    .new { animation: pop 0.3s; }
+
+    @keyframes pop {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+
+    #message {
+      text-align: center;
+      font-size: 20px;
+      margin-top: 6px;
+      color: #333;
+    }
+    #restartBtn {
+      margin-top: 10px;
+      padding: 6px 20px;
+      font-size: 14px;
+      border: none;
+      background-color: #4caf50;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #restartBtn:hover {
+      background-color: #388e3c;
+    }
+    #scoreBoard {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 6px;
+      color: #444;
+    }
+    #victoryMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 28px;
+      background: rgba(255,255,255,0.95);
+      padding: 20px 30px;
+      border: 3px solid #555;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10;
+      text-align: center;
+    }
+    #namePrompt {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      text-align: center;
+      z-index: 20;
+    }
+    #namePrompt input {
+      padding: 6px;
+      margin: 6px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    #namePrompt button {
+      margin-top: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      background-color: #1e88e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="namePrompt">
+    <h2>플레이어 이름을 입력하세요</h2>
+    <input id="inputP1" placeholder="Player 1 (X)">
+    <input id="inputP2" placeholder="Player 2 (O)">
+    <br>
+    <button onclick="confirmNames()">시작하기</button>
+  </div>
+
+  <table id="board"></table>
+  <p id="message"></p>
+  <div id="scoreBoard"></div>
+  <button id="restartBtn">🔄 재시작</button>
+  <div id="victoryMessage">🎉 Player 승리! 🎉</div>
+
+  <script>
+    const boardElement = document.getElementById("board");
+    const message = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+    const scoreBoard = document.getElementById("scoreBoard");
+    const victoryMessage = document.getElementById("victoryMessage");
+    const namePrompt = document.getElementById("namePrompt");
+    const inputP1 = document.getElementById("inputP1");
+    const inputP2 = document.getElementById("inputP2");
+
+    let board, cellElements, xQueue, oQueue, isXTurn = true, gameOver;
+    let player1Name = "Player 1", player2Name = "Player 2";
+    let score = { X: 0, O: 0 }, round = 1;
+
+    restartBtn.addEventListener("click", () => location.reload());
+
+    function confirmNames() {
+      player1Name = inputP1.value.trim() || "Player 1";
+      player2Name = inputP2.value.trim() || "Player 2";
+      namePrompt.style.display = "none";
+      updateScoreBoard();
+      initRound();
+    }
+
+    function initRound() {
+      board = Array.from({ length: 3 }, () => Array(3).fill(""));
+      cellElements = Array.from({ length: 3 }, () => Array(3));
+      xQueue = [];
+      oQueue = [];
+      gameOver = false;
+      const currentPlayer = isXTurn ? player1Name : player2Name;
+      const currentSymbol = isXTurn ? "X" : "O";
+      message.textContent = `${currentPlayer} (${currentSymbol})의 차례입니다 - ${round}라운드`;
+      renderBoard();
+    }
+
+    function updateScoreBoard() {
+      scoreBoard.innerHTML = `<strong>${player1Name} (X): ${score.X}승</strong> | <strong>${player2Name} (O): ${score.O}승</strong>`;
+    }
+
+    function renderBoard() {
+      boardElement.innerHTML = "";
+      for (let r = 0; r < 3; r++) {
+        const row = document.createElement("tr");
+        for (let c = 0; c < 3; c++) {
+          const cell = document.createElement("td");
+          
+          const mark = board[r][c] || "";
+          const coordText = `(${c+1},${3-r})`; // (1,1) ~ (3,3) 표시
+
+          cell.innerHTML = `
+            <div class="mark ${mark}">${mark}</div>
+            <div class="coord">${coordText}</div>
+          `;
+
+          cell.addEventListener("click", () => handleClick(r, c));
+          row.appendChild(cell);
+          cellElements[r][c] = cell;
+        }
+        boardElement.appendChild(row);
+      }
+    }
+
+    function handleClick(r, c) {
+      if (board[r][c] !== "" || gameOver) return;
+
+      const symbol = isXTurn ? "X" : "O";
+      const queue = isXTurn ? xQueue : oQueue;
+
+      if (queue.length === 3) {
+        const [oldR, oldC] = queue.shift();
+        board[oldR][oldC] = "";
+      }
+
+      board[r][c] = symbol;
+      queue.push([r, c]);
+      renderBoard();
+      cellElements[r][c].classList.add("new");
+
+      const winLine = checkWin(symbol);
+      if (winLine) {
+        for (const [rr, cc] of winLine) {
+          cellElements[rr][cc].classList.add("win");
+        }
+        const winnerName = isXTurn ? player1Name : player2Name;
+        message.textContent = `${winnerName} (${symbol}) 승리!`; 
+        score[symbol]++;
+        updateScoreBoard();
+        gameOver = true;
+
+        if (score[symbol] === 2) {
+          victoryMessage.textContent = `🎉 ${winnerName} 최종 승리! 🎉`;
+          victoryMessage.style.display = "block";
+        } else {
+          isXTurn = !isXTurn; // 선후공 교체
+          round++;
+          setTimeout(initRound, 1500);
+        }
+        return;
+      }
+
+      isXTurn = !isXTurn;
+      const currentPlayer = isXTurn ? player1Name : player2Name;
+      const currentSymbol = isXTurn ? "X" : "O";
+      message.textContent = `${currentPlayer} (${currentSymbol})의 차례입니다 - ${round}라운드`;
+    }
+
+    function checkWin(s) {
+      const lines = [
+        [[0,0],[0,1],[0,2]], [[1,0],[1,1],[1,2]], [[2,0],[2,1],[2,2]],
+        [[0,0],[1,0],[2,0]], [[0,1],[1,1],[2,1]], [[0,2],[1,2],[2,2]],
+        [[0,0],[1,1],[2,2]], [[0,2],[1,1],[2,0]]
+      ];
+      for (const line of lines) {
+        if (line.every(([rr, cc]) => board[rr][cc] === s)) return line;
+      }
+      return null;
+    }
+  </script>
+<div style="margin-top: 20px; text-align: center;">
+  <a href="index.html" style="
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #1e88e5;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+  ">🏠 처음 화면으로</a>
+</div>
+</body>
+</html>
