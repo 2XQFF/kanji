@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="あ행 130자와 か행 447자로 공부하는 일본 상용한자 음독, 한국어 음훈, 형태별 훈독 퀴즈.">
+<title>한자 연습장 · 상용한자 퀴즈</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23243232'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='42' fill='%23f6f3ea'%3E字%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css"><script defer src="data.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<header><a href="./" class="brand"><span class="brand-mark">字</span> 한자 연습장</a><span class="header-note">日本語 · 常用漢字</span></header>
+<main>
+<section class="intro"><div><p class="eyebrow">매일 조금씩, 또렷하게</p><h1>한 글자씩 쌓는<br>일본어의 기초.</h1><p class="intro-copy">행을 고르고, 읽기를 떠올리고, 내 것으로 만드세요.</p></div><div class="edition"><strong>577<span>字</span></strong><p>あ행 130자 · か행 447자</p><span>제공된 상용한자 PDF 기준</span></div></section>
+<div class="workspace">
+<aside class="settings" aria-label="퀴즈 설정">
+<div class="section-title"><span>01</span><h2>공부할 행</h2></div>
+<div class="row-buttons"><button class="row active" data-group="a" aria-pressed="true"><strong lang="ja">あ</strong><span>아행<small>130자</small></span><i>✓</i></button><button class="row" data-group="ka" aria-pressed="false"><strong lang="ja">か</strong><span>카행<small>447자</small></span><i>✓</i></button></div>
+<div class="future" aria-label="다른 행은 준비 중"><span>さ</span><span>た</span><span>な</span><span>は</span><span>ま</span><span>や</span><span>ら</span><span>わ</span></div><p class="muted tiny">나머지 행은 자료가 추가되면 열립니다.</p>
+<div class="section-title"><span>02</span><h2>퀴즈 유형</h2></div>
+<div class="types"><button class="type active" data-type="on" aria-pressed="true"><span class="type-icon">ア</span><span><b>일본어 음독</b><small>한자 → 가타카나 읽기</small></span><i>●</i></button><button class="type" data-type="korean" aria-pressed="false"><span class="type-icon">한</span><span><b>한국어 음훈</b><small>한자 → 뜻과 음</small></span><i>●</i></button><button class="type" data-type="kun" aria-pressed="false"><span class="type-icon">あ</span><span><b>일본어 훈독</b><small>형태별 한자 → 히라가나 읽기</small></span><i>●</i></button></div>
+<div class="section-title"><span>03</span><h2>문제 수와 답변 방식</h2></div>
+<div class="selects"><label>문제 수<select id="limit"><option value="10">10문제</option><option value="20">20문제</option><option value="50">50문제</option><option value="all">전체</option></select></label><label>답변 방식<select id="mode"><option value="choice">객관식</option><option value="write">직접 입력</option></select></label></div>
+<p id="pool-note" class="pool-note"></p><button id="start" class="primary start">퀴즈 시작 <span>↗</span></button>
+</aside>
+<section class="study" aria-label="퀴즈 영역">
+<div id="welcome" class="welcome"><div class="study-top"><span class="eyebrow">오늘의 한자 연습</span><span class="pill">READY</span></div><div class="welcome-art" lang="ja"><span>読</span><span>み</span></div><h2>알고 있는 한자도,<br>읽기는 새롭게.</h2><p>왼쪽에서 행과 유형을 선택해 시작하세요.<br>한 번에 한 문제씩, 정답과 뜻을 함께 확인합니다.</p><div class="example"><span>훈독은 이렇게 출제해요</span><div lang="ja"><b>広い</b><em>ひろい</em><small>넓다</small></div><div lang="ja"><b>広める</b><em>ひろめる</em><small>널리 알리다</small></div><div lang="ja"><b>広まる</b><em>ひろまる</em><small>널리 퍼지다</small></div></div></div>
+<div id="quiz" hidden><div class="study-top"><span id="quiz-label" class="eyebrow"></span><button id="end" class="text-button">연습 종료</button></div><div class="progress-meta"><span id="position"></span><span id="score"></span></div><div class="progress"><div id="progress-bar"></div></div><p id="prompt" class="question-label"></p><div id="word" class="question-word" lang="ja"></div><p id="hint" class="hint"></p><p id="answer-help" class="muted tiny"></p><form id="answer-form"><div id="choices" class="choices"></div><div id="write-area" hidden><label class="sr-only" for="answer">정답 입력</label><input id="answer" autocomplete="off" placeholder="읽기를 입력하세요"><button id="check" class="primary" type="submit">정답 확인</button></div></form><div id="feedback" class="feedback" role="status" hidden></div><button id="next" class="primary next" hidden>다음 문제 →</button></div>
+<div id="results" class="results" hidden></div>
+</section>
+</div>
+<footer><span>한자 연습장 <b>·</b> あ / か</span><p>PDF에 정리된 음·훈을 기준으로 출제합니다. 해당 읽기가 없는 한자는 제외됩니다.</p></footer>
+</main>
+</body></html>
