@@ -4,6 +4,17 @@ const labels={on:'일본어 음독',korean:'한국어 음훈',kun:'일본어 훈
 let groups=new Set(['a']),type='on',session=null;
 function shuffle(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function buildPool(selected,kind){return window.KANJI_DATA.filter(r=>selected.has(r.group)).flatMap(r=>kind==='kun'?r.kun.map((k,i)=>({id:r.id+'-'+i,record:r,word:k.word,answer:k.reading,meaning:k.meaning})):kind==='on'?(r.on.length?[{id:r.id,record:r,word:r.kanji,answer:r.on.join('・'),meaning:''}]:[]):[{id:r.id,record:r,word:r.kanji,answer:r.korean,meaning:''}]);}
+function choiceAnswers(q,pool,kind){
+ const unique=[...new Set(pool.map(x=>x.answer))].filter(a=>a!==q.answer);
+ const suffix=kind==='kun'?q.word.slice(q.record.kanji.length):'';
+ if(!suffix)return shuffle([q.answer,...shuffle(unique).slice(0,3)]);
+ // Prefer the same written okurigana, then readings with the same ending.
+ const exact=new Set(pool.filter(x=>x.word.slice(x.record.kanji.length)===suffix).map(x=>x.answer));
+ const preferred=shuffle(unique.filter(a=>exact.has(a)));
+ const sameEnding=shuffle(unique.filter(a=>!exact.has(a)&&a.endsWith(suffix)));
+ const fallback=shuffle(unique.filter(a=>!exact.has(a)&&!a.endsWith(suffix)));
+ return shuffle([q.answer,...[...preferred,...sameEnding,...fallback].slice(0,3)]);
+}
 function updatePool(){const n=buildPool(groups,type).length;$('pool-note').textContent=`선택한 범위에서 ${n}문제 출제 가능`;$('start').disabled=!n;}
 document.querySelectorAll('.row').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.group;if(groups.has(g)){if(groups.size===1)return;groups.delete(g);}else groups.add(g);b.classList.toggle('active',groups.has(g));b.setAttribute('aria-pressed',groups.has(g));updatePool();}));
 document.querySelectorAll('.type').forEach(b=>b.addEventListener('click',()=>{type=b.dataset.type;document.querySelectorAll('.type').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});updatePool();}));
@@ -11,7 +22,7 @@ function show(view){['welcome','quiz','results'].forEach(id=>$(id).hidden=id!==v
 function start(questions,pool,kind,mode){session={questions,pool,kind,mode,index:0,correct:0,missed:[],answered:false};show('quiz');$('quiz-label').textContent=labels[kind]+' 연습';renderQuestion();if(innerWidth<781)$('quiz').scrollIntoView({behavior:'smooth',block:'start'});}
 $('start').addEventListener('click',()=>{const pool=buildPool(groups,type),n=$('limit').value==='all'?pool.length:Math.min(Number($('limit').value),pool.length);start(shuffle(pool).slice(0,n),pool,type,$('mode').value);});
 function renderQuestion(){const s=session,q=s.questions[s.index];s.answered=false;$('position').textContent=`${s.index+1} / ${s.questions.length} 문제`;$('score').textContent=`정답 ${s.correct}개`;$('progress-bar').style.width=(s.index/s.questions.length*100)+'%';$('prompt').textContent=s.kind==='on'?'이 한자의 음독을 모두 골라주세요.':s.kind==='kun'?'이 형태의 훈독은 무엇일까요?':'이 한자의 한국어 뜻과 음은 무엇일까요?';if(s.mode==='write'&&s.kind==='on')$('prompt').textContent='이 한자의 음독을 모두 입력하세요.';$('word').textContent=q.word;$('word').classList.toggle('long',q.word.length>2);$('hint').textContent=s.kind==='kun'?q.meaning:'';$('answer-help').textContent=s.mode==='write'?(s.kind==='on'?'히라가나·가타카나 모두 가능 · 여러 음은 쉼표 또는 공백으로 구분':s.kind==='korean'?'뜻과 음을 함께 입력하세요. 예: 넓을 광':'단어 전체의 읽기를 입력하세요. 예: ひろめる'):'보기를 선택하면 정답을 확인합니다.';$('feedback').hidden=true;$('next').hidden=true;$('choices').replaceChildren();$('choices').hidden=s.mode!=='choice';$('write-area').hidden=s.mode!=='write';$('answer').value='';$('answer').disabled=false;$('check').disabled=false;
- if(s.mode==='choice'){const unique=[...new Set(s.pool.map(x=>x.answer))].filter(a=>a!==q.answer);shuffle([q.answer,...shuffle(unique).slice(0,3)]).forEach(a=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=a;b.addEventListener('click',()=>grade(a,b));$('choices').append(b);});}else $('answer').focus();
+ if(s.mode==='choice'){choiceAnswers(q,s.pool,s.kind).forEach(a=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=a;b.addEventListener('click',()=>grade(a,b));$('choices').append(b);});}else $('answer').focus();
 }
 function normalize(a){return a.normalize('NFKC').trim().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
 function isCorrect(value,q,kind){if(kind==='on'){const split=a=>[...new Set(normalize(a).split(/[\s,、・/]+/).filter(Boolean))].sort().join('|');return split(value)===split(q.answer);}if(kind==='korean')return normalize(value).replace(/\s/g,'')===normalize(q.answer).replace(/\s/g,'');return normalize(value)===normalize(q.answer);}
